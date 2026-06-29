@@ -36,7 +36,4 @@ jobs:
           envs: ROOT_PASSWORD
           script_stop: true
           script: |
-            printf '%s\n' "$ROOT_PASSWORD" | sudo -S -p '' -i bash -c '
-              cd /home
-              ls
-            '
+            printf '%s\n' "$ROOT_PASSWORD" | sudo -S -p '' -i bash -lc 'cd /home && ls'
