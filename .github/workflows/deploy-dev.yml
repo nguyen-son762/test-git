@@ -17,6 +17,7 @@ jobs:
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          ephemeral: true
 
       - name: Verify connection
         run: |
@@ -36,5 +37,6 @@ jobs:
           script_stop: true
           script: |
             printf '%s\n' "$ROOT_PASSWORD" | sudo -S -p '' -i bash -c '
+              cd /home
               ls
             '
