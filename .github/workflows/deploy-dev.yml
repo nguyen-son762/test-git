@@ -13,28 +13,36 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Connect to Tailscale
+      - name: Connect to Tailscale VPN
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Verify connection
+      - name: Verify Tailscale connection
         run: |
           tailscale status
           ping -c 3 ${{ secrets.VPS_HOST }}
 
-      - name: Setup SSH
+      - name: Setup SSH password login
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
           mkdir -p ~/.ssh
-          ssh-keyscan ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan "$VPS_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy and build
+      - name: Deploy and build via Tailscale SSH
         env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          sshpass -e ssh \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" << 'EOF'
             cd /var/www/my-app
 
             git fetch origin
