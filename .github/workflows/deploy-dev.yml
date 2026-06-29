@@ -13,36 +13,24 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Connect to Tailscale VPN
+      - name: Connect to Tailscale
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Verify Tailscale connection
+      - name: Verify connection
         run: |
           tailscale status
           ping -c 3 ${{ secrets.VPS_HOST }}
 
-      - name: Setup SSH password login
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
-          mkdir -p ~/.ssh
-          ssh-keyscan "$VPS_HOST" >> ~/.ssh/known_hosts
-
-      - name: Deploy and build via Tailscale SSH
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh \
-            -o PreferredAuthentications=password \
-            -o PubkeyAuthentication=no \
-            -o StrictHostKeyChecking=yes \
-            "$VPS_USER@$VPS_HOST" << 'EOF'
+      - name: Deploy and build via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script: |
             cd /var/www/my-app
 
             git fetch origin
@@ -53,4 +41,3 @@ jobs:
             npm run build
 
             pm2 restart my-app
-          EOF
