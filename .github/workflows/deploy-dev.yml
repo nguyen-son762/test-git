@@ -25,14 +25,16 @@ jobs:
 
       - name: Setup SSH
         run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy and build
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          sshpass -e ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd /var/www/my-app
 
             git fetch origin
